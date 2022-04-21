@@ -112,8 +112,12 @@ uint32_t calculateRange(WrenVM* vm, ObjRange* range, uint32_t* length,
     return UINT32_MAX;
   }
 
+  if (!validateIntValue(vm, range->step, "Range step")) return UINT32_MAX;
+
+  int stepInt = (int)range->step;
   uint32_t to = (uint32_t)value;
-  *length = abs((int)(from - to)) + 1;
-  *step = from < to ? 1 : -1;
+
+  *length = abs((int)(from - to))/stepInt + 1;
+  *step = from < to ? stepInt : -stepInt;
   return from;
 }

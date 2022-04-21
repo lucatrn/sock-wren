@@ -116,7 +116,38 @@ class Sequence {
     }
     return result
   }
+
+  static empty { __empty || (__empty = EmptySequence.new()) }
+
+  static of(value) { SingleSequence.new(value, 1) }
+
+  static of(value, count) { SingleSequence.new(value, count) }
 }
+
+class EmptySequence is Sequence {
+  construct new() {}
+
+  iterate(i) { false }
+  iteratorValue(i) { null }
+}
+
+class SingleSequence is Sequence {
+  construct new(value, count) {
+    if (!(count is Num)) Fiber.abort("count must be a Num")
+    _value = value
+    _count = count
+  }
+
+  count { _count }
+
+  iterate(i) {
+    if (!i) i = 0
+    return i < _count ? i + 1 : false
+  }
+
+  iteratorValue(i) { _value }
+}
+
 
 class MapSequence is Sequence {
   construct new(sequence, fn) {
@@ -195,8 +226,8 @@ class String is Sequence {
     var last = 0
     var index = 0
 
-    var delimSize = delimiter.byteCount_
-    var size = byteCount_
+    var delimSize = delimiter.byteCount
+    var size = byteCount
 
     while (last < size && (index = indexOf(delimiter, last)) != -1) {
       result.add(this[last...index])
@@ -223,8 +254,8 @@ class String is Sequence {
     var last = 0
     var index = 0
 
-    var fromSize = from.byteCount_
-    var size = byteCount_
+    var fromSize = from.byteCount
+    var size = byteCount
 
     while (last < size && (index = indexOf(from, last)) != -1) {
       result = result + this[last...index] + to
@@ -263,7 +294,7 @@ class String is Sequence {
 
     var end
     if (trimEnd) {
-      end = byteCount_ - 1
+      end = byteCount - 1
       while (end >= start) {
         var codePoint = codePointAt_(end)
         if (codePoint != -1 && !codePoints.contains(codePoint)) break
@@ -296,11 +327,11 @@ class StringByteSequence is Sequence {
     _string = string
   }
 
-  [index] { _string.byteAt_(index) }
+  [index] { _string.byteAt(index) }
   iterate(iterator) { _string.iterateByte_(iterator) }
-  iteratorValue(iterator) { _string.byteAt_(iterator) }
+  iteratorValue(iterator) { _string.byteAt(iterator) }
 
-  count { _string.byteCount_ }
+  count { _string.byteCount }
 }
 
 class StringCodePointSequence is Sequence {

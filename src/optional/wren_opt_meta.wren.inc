@@ -29,6 +29,9 @@ static const char* metaModuleSource =
 "    return compile_(source, false, true)\n"
 "  }\n"
 "\n"
+"  static module { module(1) }\n"
+"\n"
 "  foreign static compile_(source, isExpression, printErrors)\n"
 "  foreign static getModuleVariables_(module)\n"
+"  foreign static module(count)\n"
 "}\n";

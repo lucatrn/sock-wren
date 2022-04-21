@@ -13,6 +13,8 @@
 
 #include "wren_core.wren.inc"
 
+#define TAU 6.28318530717958647692528676655900577
+
 DEF_PRIMITIVE(bool_not)
 {
   RETURN_BOOL(!AS_BOOL(args[0]));
@@ -640,7 +642,7 @@ DEF_PRIMITIVE(num_fromString)
 DEF_NUM_CONSTANT(infinity, INFINITY)
 DEF_NUM_CONSTANT(nan,      WREN_DOUBLE_NAN)
 DEF_NUM_CONSTANT(pi,       3.14159265358979323846264338327950288)
-DEF_NUM_CONSTANT(tau,      6.28318530717958647692528676655900577)
+DEF_NUM_CONSTANT(tau,      TAU)
 
 DEF_NUM_CONSTANT(largest,  DBL_MAX)
 DEF_NUM_CONSTANT(smallest, DBL_MIN)
@@ -689,21 +691,97 @@ DEF_NUM_BITWISE(RightShift, >>)
     }
 
 DEF_NUM_FN(abs,     fabs)
-DEF_NUM_FN(acos,    acos)
-DEF_NUM_FN(asin,    asin)
-DEF_NUM_FN(atan,    atan)
 DEF_NUM_FN(cbrt,    cbrt)
 DEF_NUM_FN(ceil,    ceil)
-DEF_NUM_FN(cos,     cos)
 DEF_NUM_FN(floor,   floor)
 DEF_NUM_FN(negate,  -)
 DEF_NUM_FN(round,   round)
-DEF_NUM_FN(sin,     sin)
 DEF_NUM_FN(sqrt,    sqrt)
-DEF_NUM_FN(tan,     tan)
 DEF_NUM_FN(log,     log)
 DEF_NUM_FN(log2,    log2)
 DEF_NUM_FN(exp,     exp)
+
+// Defines a trig function on Num that uses turns (0..1)
+#define DEF_NUM_TRIG_FN(name, fn)                                              \
+    DEF_PRIMITIVE(num_##name)                                                  \
+    {                                                                          \
+      RETURN_NUM(fn(AS_NUM(args[0]) * TAU));                                   \
+    }
+
+DEF_NUM_TRIG_FN(cos, cos)
+DEF_NUM_TRIG_FN(sin, sin)
+DEF_NUM_TRIG_FN(tan, tan)
+
+// Defines an inverse trig function on Num that uses turns (0..1)
+#define DEF_NUM_INV_TRIG_FN(name, fn)                                          \
+    DEF_PRIMITIVE(num_##name)                                                  \
+    {                                                                          \
+      RETURN_NUM(fn(AS_NUM(args[0])) / TAU);                                   \
+    }
+
+DEF_NUM_INV_TRIG_FN(acos, acos)
+DEF_NUM_INV_TRIG_FN(asin, asin)
+DEF_NUM_INV_TRIG_FN(atan, atan)
+
+DEF_PRIMITIVE(num_tri)
+{
+  double value = AS_NUM(args[0]) + 0.75;
+  value = value - floor(value);
+  RETURN_NUM(fabs(value * 4.0 - 2.0) - 1.0);
+}
+
+DEF_PRIMITIVE(num_pulse)
+{
+  double value = AS_NUM(args[0]);
+  value = value - floor(value);
+  RETURN_NUM(value < 0.5 ? 1.0 : -1.0);
+}
+
+DEF_PRIMITIVE(num_smoothstep)
+{
+  double value = AS_NUM(args[0]);
+  if (value <= 0.0)
+  {
+    value = 0.0;
+  }
+  else if (value >= 1.0)
+  {
+    value = 1.0;
+  }
+  else
+  {
+    value = value * value * (3.0 - 2.0 * value);
+  }
+  RETURN_NUM(value);
+}
+
+DEF_PRIMITIVE(num_repeat)
+{
+  double value = AS_NUM(args[0]);
+  RETURN_NUM(value - floor(value));
+}
+
+DEF_PRIMITIVE(num_repeat1)
+{
+  if (!validateNum(vm, args[1], "len value")) return false;
+
+  double value = AS_NUM(args[0]);
+  double len = AS_NUM(args[1]);
+  RETURN_NUM(value - floor(value / len) * len);
+}
+
+DEF_PRIMITIVE(num_repeat2)
+{
+  if (!validateNum(vm, args[1], "from value")) return false;
+  if (!validateNum(vm, args[2], "to value")) return false;
+
+  double value = AS_NUM(args[0]);
+  double from = AS_NUM(args[1]);
+  double to = AS_NUM(args[2]);
+  value = value - from;
+  double len = to - from;
+  RETURN_NUM(from + value - floor(value / len) * len);
+}
 
 DEF_PRIMITIVE(num_mod)
 {
@@ -735,7 +813,7 @@ DEF_PRIMITIVE(num_dotDot)
 
   double from = AS_NUM(args[0]);
   double to = AS_NUM(args[1]);
-  RETURN_VAL(wrenNewRange(vm, from, to, true));
+  RETURN_VAL(wrenNewRange(vm, from, to, 1.0, true));
 }
 
 DEF_PRIMITIVE(num_dotDotDot)
@@ -744,14 +822,14 @@ DEF_PRIMITIVE(num_dotDotDot)
 
   double from = AS_NUM(args[0]);
   double to = AS_NUM(args[1]);
-  RETURN_VAL(wrenNewRange(vm, from, to, false));
+  RETURN_VAL(wrenNewRange(vm, from, to, 1.0, false));
 }
 
 DEF_PRIMITIVE(num_atan2)
 {
   if (!validateNum(vm, args[1], "x value")) return false;
 
-  RETURN_NUM(atan2(AS_NUM(args[0]), AS_NUM(args[1])));
+  RETURN_NUM(atan2(AS_NUM(args[0]), AS_NUM(args[1])) / TAU);
 }
 
 DEF_PRIMITIVE(num_min)
@@ -781,6 +859,57 @@ DEF_PRIMITIVE(num_clamp)
   double min = AS_NUM(args[1]);
   double max = AS_NUM(args[2]);
   double result = (value < min) ? min : ((value > max) ? max : value);
+  RETURN_NUM(result);
+}
+
+DEF_PRIMITIVE(num_lerp)
+{
+  if (!validateNum(vm, args[1], "to value")) return false;
+  if (!validateNum(vm, args[2], "t value")) return false;
+
+  double from = AS_NUM(args[0]);
+  double to = AS_NUM(args[1]);
+  double t = AS_NUM(args[2]);
+  double result = from + (to - from) * t;
+  RETURN_NUM(result);
+}
+
+DEF_PRIMITIVE(num_inverseLerp)
+{
+  if (!validateNum(vm, args[1], "to value")) return false;
+  if (!validateNum(vm, args[2], "target value")) return false;
+
+  double from = AS_NUM(args[0]);
+  double to = AS_NUM(args[1]);
+  double target = AS_NUM(args[2]);
+  double result;
+  if (from == to) {
+    result = target < from ? 0.0 : 1.0;
+  } else {
+    result = (target - from) / (to - from);
+  }
+  RETURN_NUM(result);
+}
+
+DEF_PRIMITIVE(num_map)
+{
+  if (!validateNum(vm, args[1], "a1 value")) return false;
+  if (!validateNum(vm, args[2], "b1 value")) return false;
+  if (!validateNum(vm, args[3], "a2 value")) return false;
+  if (!validateNum(vm, args[4], "b2 value")) return false;
+
+  double value = AS_NUM(args[0]);
+  double a1 = AS_NUM(args[1]);
+  double b1 = AS_NUM(args[2]);
+  double a2 = AS_NUM(args[3]);
+  double b2 = AS_NUM(args[4]);
+  double result;
+  if (a1 == b1) {
+    result = value < a1 ? a2 : b2;
+  } else {
+    result = (value - a1) / (b1 - a1);
+    result = a2 + (b2 - a2) * result;
+  }
   RETURN_NUM(result);
 }
 
@@ -897,6 +1026,20 @@ DEF_PRIMITIVE(object_type)
   RETURN_OBJ(wrenGetClass(vm, args[0]));
 }
 
+DEF_PRIMITIVE(range_dotDot)
+{
+  if (!validateNum(vm, args[1], "Right hand side of range")) return false;
+
+  double by = AS_NUM(args[1]);
+  if (by <= 0.0 || isnan(by))
+  {
+    RETURN_ERROR("Range step must be positive");
+  }
+
+  ObjRange* range = AS_RANGE(args[0]);
+  RETURN_VAL(wrenNewRange(vm, range->from, range->to, by, range->isInclusive));
+}
+
 DEF_PRIMITIVE(range_from)
 {
   RETURN_NUM(AS_RANGE(args[0])->from);
@@ -905,6 +1048,11 @@ DEF_PRIMITIVE(range_from)
 DEF_PRIMITIVE(range_to)
 {
   RETURN_NUM(AS_RANGE(args[0])->to);
+}
+
+DEF_PRIMITIVE(range_step)
+{
+  RETURN_NUM(AS_RANGE(args[0])->step);
 }
 
 DEF_PRIMITIVE(range_min)
@@ -941,12 +1089,12 @@ DEF_PRIMITIVE(range_iterate)
   // Iterate towards [to] from [from].
   if (range->from < range->to)
   {
-    iterator++;
+    iterator += range->step;
     if (iterator > range->to) RETURN_FALSE;
   }
   else
   {
-    iterator--;
+    iterator -= range->step;
     if (iterator < range->to) RETURN_FALSE;
   }
 
@@ -971,8 +1119,22 @@ DEF_PRIMITIVE(range_toString)
   Value to = wrenNumToString(vm, range->to);
   wrenPushRoot(vm, AS_OBJ(to));
 
-  Value result = wrenStringFormat(vm, "@$@", from,
-                                  range->isInclusive ? ".." : "...", to);
+  Value result;
+  if (range->step == 1.0)
+  {
+    result = wrenStringFormat(vm, "@$@", from,
+                              range->isInclusive ? ".." : "...", to);
+  }
+  else
+  {
+    Value step = wrenNumToString(vm, range->step);
+    wrenPushRoot(vm, AS_OBJ(step));
+
+    result = wrenStringFormat(vm, "@$@..@", from,
+                              range->isInclusive ? ".." : "...", to, step);
+    
+    wrenPopRoot(vm);
+  }
 
   wrenPopRoot(vm);
   wrenPopRoot(vm);
@@ -1403,6 +1565,15 @@ void wrenInitializeCore(WrenVM* vm)
   PRIMITIVE(vm->numClass, "sign", num_sign);
   PRIMITIVE(vm->numClass, "toString", num_toString);
   PRIMITIVE(vm->numClass, "truncate", num_truncate);
+  PRIMITIVE(vm->numClass, "tri", num_tri);
+  PRIMITIVE(vm->numClass, "pulse", num_pulse);
+  PRIMITIVE(vm->numClass, "smoothstep", num_smoothstep);
+  PRIMITIVE(vm->numClass, "repeat", num_repeat);
+  PRIMITIVE(vm->numClass, "repeat(_)", num_repeat1);
+  PRIMITIVE(vm->numClass, "repeat(_,_)", num_repeat2);
+  PRIMITIVE(vm->numClass, "lerp(_,_)", num_lerp);
+  PRIMITIVE(vm->numClass, "inverseLerp(_,_)", num_inverseLerp);
+  PRIMITIVE(vm->numClass, "map(_,_,_,_)", num_map);
 
   // These are defined just so that 0 and -0 are equal, which is specified by
   // IEEE 754 even though they have different bit representations.
@@ -1414,8 +1585,8 @@ void wrenInitializeCore(WrenVM* vm)
   PRIMITIVE(vm->stringClass->obj.classObj, "fromByte(_)", string_fromByte);
   PRIMITIVE(vm->stringClass, "+(_)", string_plus);
   PRIMITIVE(vm->stringClass, "[_]", string_subscript);
-  PRIMITIVE(vm->stringClass, "byteAt_(_)", string_byteAt);
-  PRIMITIVE(vm->stringClass, "byteCount_", string_byteCount);
+  PRIMITIVE(vm->stringClass, "byteAt(_)", string_byteAt);
+  PRIMITIVE(vm->stringClass, "byteCount", string_byteCount);
   PRIMITIVE(vm->stringClass, "codePointAt_(_)", string_codePointAt);
   PRIMITIVE(vm->stringClass, "contains(_)", string_contains);
   PRIMITIVE(vm->stringClass, "endsWith(_)", string_endsWith);
@@ -1458,8 +1629,10 @@ void wrenInitializeCore(WrenVM* vm)
   PRIMITIVE(vm->mapClass, "valueIteratorValue_(_)", map_valueIteratorValue);
 
   vm->rangeClass = AS_CLASS(wrenFindVariable(vm, coreModule, "Range"));
+  PRIMITIVE(vm->rangeClass, "..(_)", range_dotDot);
   PRIMITIVE(vm->rangeClass, "from", range_from);
   PRIMITIVE(vm->rangeClass, "to", range_to);
+  PRIMITIVE(vm->rangeClass, "step", range_step);
   PRIMITIVE(vm->rangeClass, "min", range_min);
   PRIMITIVE(vm->rangeClass, "max", range_max);
   PRIMITIVE(vm->rangeClass, "isInclusive", range_isInclusive);

@@ -1,58 +1,68 @@
-## Wren is a small, fast, class-based concurrent scripting language
 
-Think Smalltalk in a Lua-sized package with a dash of Erlang and wrapped up in
-a familiar, modern [syntax][].
+This is a fork of [Wren](https://github.com/wren-lang/wren) used for the Sock game framework (currently private/WIP).
 
-```dart
-System.print("Hello, world!")
 
-class Wren {
-  flyTo(city) {
-    System.print("Flying to %(city)")
-  }
-}
+## Changes
 
-var adjectives = Fiber.new {
-  ["small", "clean", "fast"].each {|word| Fiber.yield(word) }
-}
+* `Num` trig methods now use turns (0..1) instead of radians (0..2π).
 
-while (!adjectives.isDone) System.print(adjectives.call())
-```
 
- *  **Wren is small.** The VM implementation is under [4,000 semicolons][src].
-    You can skim the whole thing in an afternoon. It's *small*, but not
-    *dense*. It is readable and [lovingly-commented][nan].
+## Additions
 
- *  **Wren is fast.** A fast single-pass compiler to tight bytecode, and a
-    compact object representation help Wren [compete with other dynamic
-    languages][perf].
+* Added `step` field to `Range`.
+  
+  Set using `..` operator on a `Range`.
+  
+  ```wren
+  (3..9).step        // 1
+  (3..9..2).step     // 2
+  (3..9..2).toList   // [3, 5, 7, 9]
+  (9..3..2).toList   // [9, 7, 5, 3]
+  3..9..0            // error, step must be positive
+  3..9..-1           // error, step must be positive
+  "fling"[0..-1..2]  // "fig"
+  ```
 
- *  **Wren is class-based.** There are lots of scripting languages out there,
-    but many have unusual or non-existent object models. Wren places
-    [classes][] front and center.
+* Added `Sequence` static methods:
+  | Method | Description |
+  | -- | -- |
+  | `Sequence.empty` | Get an empty sequence (singleton) |
+  | `Sequence.of(value)` | Get a sequence that contains just `value` |
+  | `Sequence.of(value, count)` | Get a sequence that contains `value` repeated `count` times |
 
- *  **Wren is concurrent.** Lightweight [fibers][] are core to the execution
-    model and let you organize your program into an army of communicating
-    coroutines.
+  > These use two new undocumented classes `EmptySequence` and `SingleSequence`.
 
- *  **Wren is a scripting language.** Wren is intended for embedding in
-    applications. It has no dependencies, a small standard library,
-    and [an easy-to-use C API][embedding]. It compiles cleanly as C99, C++98
-    or anything later.
+* Added `Num` methods:
+  | Method | Description |
+  | -- | -- |
+  | `num.tri` | Triangle wave function, repeats 0..1. |
+  | `num.pulse` | Pulse wave function, repeats 0..1. |
+  | `num.smoothstep` | Smoothstep function 0..1 |
+  | `num.repeat` | Wrap `num` on the range 0..1 |
+  | `num.repeat(to)` | Wrap `num` on the range 0..`to` |
+  | `num.repeat(from, to)` | Wrap `num` on the range `from`..`to` |
+  | `num.lerp(to, t)` | Linear interporlate between `num` and `to` using `t` |
+  | `num.inverseLerp(to, target)` | Get `t` value such that `num.lerp(to, t) == target` |
+  | `num.map(a1, b1, a2, b2)` | Linear remap `num` from range `a1`..`b1` to `a2`..`b2`. |
 
-If you like the sound of this, [let's get started][started]. You can even try
-it [in your browser][browser]! Excited? Well, come on and [get
-involved][contribute]!
+* Added `String` methods:
+  | Method | Description |
+  | -- | -- |
+  | `string.byteCount` | Equivalent to `string.bytes.count`, previously `string.byteCount_` |
+  | `string.byteAt(i)` | Equivalent to `string.bytes[i]`, previously `string.byteAt_(i)` |
 
-[![Build Status](https://travis-ci.org/wren-lang/wren.svg?branch=main)](https://travis-ci.org/wren-lang/wren)
+* Added `Meta` static methods:
+  | Method | Description |
+  | -- | -- |
+  | `Meta.module` | Get the current module name. |
+  | `Meta.module(count)` | Get the name of the module `count` stack frames up (0 or more).<br>Returns `null` if `count` is too far up. |
 
-[syntax]: http://wren.io/syntax.html
-[src]: https://github.com/wren-lang/wren/tree/main/src
-[nan]: https://github.com/wren-lang/wren/blob/93dac9132773c5bc0bbe92df5ccbff14da9d25a6/src/vm/wren_value.h#L486-L541
-[perf]: http://wren.io/performance.html
-[classes]: http://wren.io/classes.html
-[fibers]: http://wren.io/concurrency.html
-[embedding]: http://wren.io/embedding/
-[started]: http://wren.io/getting-started.html
-[browser]: http://ppvk.github.io/wren-nest/
-[contribute]: http://wren.io/contributing.html
+* For the `Random` class:
+  * Added a static singleton `Random.default`.
+  * Added equivalent static method for each instance method, which use the `Random.default` singleton.
+
+* Added a C function for implictly importing modules (based on [avivbeeri's implementation](https://github.com/avivbeeri/wren/commit/522a20a77138330a17df060afa29f9f44f614f97)).
+  
+  ```c
+  void wrenAddImplicitImportModule(WrenVM* vm, const char* module);
+  ```

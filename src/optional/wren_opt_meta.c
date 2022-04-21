@@ -65,6 +65,37 @@ void metaGetModuleVariables(WrenVM* vm)
   }
 }
 
+void wrenMetaModuleName(WrenVM* vm)
+{
+  if (wrenGetSlotType(vm, 1) != WREN_TYPE_NUM)
+  {
+    wrenSetSlotString(vm, 0, "count must be a number");
+    wrenAbortFiber(vm, 0);
+    return;
+  }
+
+  double value = wrenGetSlotDouble(vm, 1);
+
+  if (trunc(value) != value || value < 0) {
+    wrenSetSlotString(vm, 0, "count must be a non-negative integer");
+    wrenAbortFiber(vm, 0);
+    return;
+  }
+
+  ObjFiber* currentFiber = vm->fiber;
+
+  int frameIndex = currentFiber->numFrames - 1 - (int)value;
+  if (frameIndex < 0)
+  {
+    wrenSetSlotNull(vm, 0);
+  }
+  else
+  {
+    ObjString* moduleName = currentFiber->frames[frameIndex].closure->fn->module->name;
+    wrenSetSlotString(vm, 0, moduleName->value);
+  }
+}
+
 const char* wrenMetaSource()
 {
   return metaModuleSource;
@@ -87,6 +118,11 @@ WrenForeignMethodFn wrenMetaBindForeignMethod(WrenVM* vm,
   if (strcmp(signature, "getModuleVariables_(_)") == 0)
   {
     return metaGetModuleVariables;
+  }
+  
+  if (strcmp(signature, "module(_)") == 0)
+  {
+    return wrenMetaModuleName;
   }
   
   ASSERT(false, "Unknown method.");

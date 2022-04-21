@@ -413,7 +413,7 @@ static uint32_t hashObject(Obj* object)
     case OBJ_RANGE:
     {
       ObjRange* range = (ObjRange*)object;
-      return hashNumber(range->from) ^ hashNumber(range->to);
+      return hashNumber(range->from) ^ hashNumber(range->to) ^ hashNumber(range->step);
     }
 
     case OBJ_STRING:
@@ -660,12 +660,13 @@ ObjModule* wrenNewModule(WrenVM* vm, ObjString* name)
   return module;
 }
 
-Value wrenNewRange(WrenVM* vm, double from, double to, bool isInclusive)
+Value wrenNewRange(WrenVM* vm, double from, double to, double step, bool isInclusive)
 {
   ObjRange* range = ALLOCATE(vm, ObjRange);
   initObj(vm, &range->obj, OBJ_RANGE, vm->rangeClass);
   range->from = from;
   range->to = to;
+  range->step = step;
   range->isInclusive = isInclusive;
 
   return OBJ_VAL(range);
@@ -1311,6 +1312,7 @@ bool wrenValuesEqual(Value a, Value b)
       ObjRange* bRange = (ObjRange*)bObj;
       return aRange->from == bRange->from &&
              aRange->to == bRange->to &&
+             aRange->step == bRange->step &&
              aRange->isInclusive == bRange->isInclusive;
     }
 

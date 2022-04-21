@@ -92,4 +92,15 @@ foreign class Random {
       list[i] = temp
     }
   }
+
+  static default { __default || (__default = Random.new()) }
+  static float() { default.float() }
+  static float(end) { default.float(end) }
+  static float(start, end) { default.float(start, end) }
+  static int() { default.int() }
+  static int(end) { default.int(end) }
+  static int(start, end) { default.int(start, end) }
+  static sample(list) { default.sample(list) }
+  static sample(list, count) { default.sample(list, count) }
+  static shuffle(list) { default.shuffle(list) }
 }

@@ -49,6 +49,9 @@ struct WrenVM
   // whose key is null) for the module's name and the value is the ObjModule
   // for the module.
   ObjMap* modules;
+
+  // List of module names (as ObjString) to automatically import.
+  ObjList* implicitImports;
   
   // The most recently imported module. More specifically, the module whose
   // code has most recently finished executing.

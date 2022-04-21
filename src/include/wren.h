@@ -551,4 +551,9 @@ WREN_API void* wrenGetUserData(WrenVM* vm);
 // Sets user data associated with the WrenVM.
 WREN_API void wrenSetUserData(WrenVM* vm, void* userData);
 
+// Mark a module to be implicitly imported in all subsequently created modules,
+// either an optional Wren module ("meta" or "random"), or a user defined
+// module which has already been interpreted.
+WREN_API void wrenAddImplicitImportModule(WrenVM* vm, const char* module);
+
 #endif

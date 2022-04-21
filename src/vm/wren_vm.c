@@ -92,6 +92,7 @@ WrenVM* wrenNewVM(WrenConfiguration* config)
   wrenSymbolTableInit(&vm->methodNames);
 
   vm->modules = wrenNewMap(vm);
+  vm->implicitImports = wrenNewList(vm, 0);
   wrenInitializeCore(vm);
   return vm;
 }
@@ -144,6 +145,7 @@ void wrenCollectGarbage(WrenVM* vm)
   vm->bytesAllocated = 0;
 
   wrenGrayObj(vm, (Obj*)vm->modules);
+  wrenGrayObj(vm, (Obj*)vm->implicitImports);
 
   // Temporary roots.
   for (int i = 0; i < vm->numTempRoots; i++)
@@ -479,6 +481,20 @@ static ObjClosure* compileInModule(WrenVM* vm, Value name, const char* source,
                          coreModule->variableNames.data[i]->length,
                          coreModule->variables.data[i], NULL);
     }
+
+    // Added configured implicitly imported modules.
+    ObjList* imports = vm->implicitImports;
+    int size = imports->elements.count;
+    for (int i = 0; i < size; i++) {
+      ObjModule* importModule = getModule(vm, imports->elements.data[i]);
+      for (int j = 0; j < importModule->variables.count; j++)
+      {
+        wrenDefineVariable(vm, module,
+                           importModule->variableNames.data[j]->value,
+                           importModule->variableNames.data[j]->length,
+                           importModule->variables.data[j], NULL);
+      }
+    }
   }
 
   ObjFn* fn = wrenCompile(vm, module, source, isExpression, printErrors);
@@ -739,7 +755,6 @@ static Value importModule(WrenVM* vm, Value name)
   wrenPushRoot(vm, AS_OBJ(name));
 
   WrenLoadModuleResult result = {0};
-  const char* source = NULL;
   
   // Let the host try to provide the module.
   if (vm->config.loadModuleFn != NULL)
@@ -1990,4 +2005,38 @@ void* wrenGetUserData(WrenVM* vm)
 void wrenSetUserData(WrenVM* vm, void* userData)
 {
 	vm->config.userData = userData;
+}
+
+void wrenAddImplicitImportModule(WrenVM* vm, const char* module) {
+  ASSERT(module != NULL, "Module cannot be NULL.");
+
+  Value moduleName = wrenStringFormat(vm, "$", module);
+
+  // When importing core optional modules, they can't be initialised by the C API.
+  // So we should interpret them now.
+  if (false) {}
+#if WREN_OPT_META
+  else if (strcmp(module, "meta") == 0)
+  {
+    if (getModule(vm, moduleName) == NULL)
+    {
+      wrenInterpret(vm, module, wrenMetaSource());
+    }
+  }
+#endif
+#if WREN_OPT_RANDOM
+  else if (strcmp(module, "random") == 0)
+  {
+    if (getModule(vm, moduleName) == NULL)
+    {
+      wrenInterpret(vm, module, wrenRandomSource());
+    }
+  }
+#endif
+  else
+  {
+    ASSERT(getModule(vm, moduleName) != NULL, "Could not find module.");
+  }
+
+  wrenListInsert(vm, vm->implicitImports, moduleName, vm->implicitImports->elements.count);
 }

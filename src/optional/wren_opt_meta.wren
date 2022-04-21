@@ -27,6 +27,9 @@ class Meta {
     return compile_(source, false, true)
   }
 
+  static module { module(1) }
+
   foreign static compile_(source, isExpression, printErrors)
   foreign static getModuleVariables_(module)
+  foreign static module(count)
 }
