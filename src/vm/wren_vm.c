@@ -1736,6 +1736,26 @@ void* wrenGetSlotForeign(WrenVM* vm, int slot)
   return AS_FOREIGN(vm->apiStack[slot])->data;
 }
 
+bool wrenGetSlotIsInstanceOf(WrenVM* vm, int slot, int classSlot) {
+  validateApiSlot(vm, slot);
+  validateApiSlot(vm, classSlot);
+  ASSERT(IS_CLASS(vm->apiStack[classSlot]), "classSlot must hold a class.");
+  
+  ObjClass* classObj = wrenGetClass(vm, vm->apiStack[slot]);
+  ObjClass* baseClassObj = AS_CLASS(vm->apiStack[classSlot]);
+
+  // Walk the superclass chain looking for the class.
+  do
+  {
+    if (baseClassObj == classObj) return true;
+
+    classObj = classObj->superclass;
+  }
+  while (classObj != NULL);
+
+  return false;
+}
+
 const char* wrenGetSlotString(WrenVM* vm, int slot)
 {
   validateApiSlot(vm, slot);

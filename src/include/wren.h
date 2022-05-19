@@ -430,6 +430,11 @@ WREN_API double wrenGetSlotDouble(WrenVM* vm, int slot);
 // foreign class.
 WREN_API void* wrenGetSlotForeign(WrenVM* vm, int slot);
 
+// Checks if an object in [slot] is an instance of the class object in [classSlot].
+//
+// It is in error [classSlot] is not a class object.
+WREN_API bool wrenGetSlotIsInstanceOf(WrenVM* vm, int slot, int classSlot);
+
 // Reads a string from [slot].
 //
 // The memory for the returned string is owned by Wren. You can inspect it
