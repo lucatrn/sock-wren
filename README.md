@@ -66,3 +66,5 @@ This is a fork of [Wren](https://github.com/wren-lang/wren) used for the Sock ga
   ```c
   void wrenAddImplicitImportModule(WrenVM* vm, const char* module);
   ```
+
+* Added capability to ensure `wrenGargabeCollect` does not re-enter (e.g. if releasing handle in finalizer), [pulled from here](https://github.com/wren-lang/wren/pull/1076).
