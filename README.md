@@ -74,3 +74,5 @@ This is a fork of [Wren](https://github.com/wren-lang/wren) used for the Sock ga
   ```
 
 * Added capability to ensure `wrenGargabeCollect` does not re-enter (e.g. if releasing handle in finalizer), [pulled from here](https://github.com/wren-lang/wren/pull/1076).
+
+* Added [ChayimFriedman2's](https://github.com/wren-lang/wren/pull/911) Allocation/GC optimization for foreign classes.
