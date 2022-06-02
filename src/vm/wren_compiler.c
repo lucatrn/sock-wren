@@ -728,14 +728,21 @@ static void skipBlockComment(Parser* parser)
   }
 }
 
+// Converts hexadecimal character to integer from 0..15.
+// Returns -1 if invalid.
+static int convertHexDigit(char c) {
+  if (c >= '0' && c <= '9') return c - '0';
+  if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+  if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+  return -1;
+}
+
 // Reads the next character, which should be a hex digit (0-9, a-f, or A-F) and
 // returns its numeric value. If the character isn't a hex digit, returns -1.
 static int readHexDigit(Parser* parser)
 {
-  char c = nextChar(parser);
-  if (c >= '0' && c <= '9') return c - '0';
-  if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-  if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+  int n = convertHexDigit(nextChar(parser));
+  if (n >= 0) return n;
 
   // Don't consume it if it isn't expected. Keeps us from reading past the end
   // of an unterminated string.
@@ -779,6 +786,47 @@ static void readHexNumber(Parser* parser)
   while (readHexDigit(parser) != -1) continue;
 
   makeNumber(parser, true);
+}
+
+// Finishes lexing a hexadecimal color literal.
+static void readHexColor(Parser* parser)
+{
+  // Iterate over all the valid hexadecimal digits found.
+  int count = 0;
+  while (readHexDigit(parser) != -1) count++;
+
+  // Parse digits based on number of digits.
+  const char* str = parser->tokenStart + 1;
+  uint8_t rgba[4] = { 0, 0, 0, 255 };
+
+  if (count == 3 || count == 4)
+  {
+    // #012 or #0123
+    for (int i = 0; i < count; i++)
+    {
+      int x = convertHexDigit(*(str + i));
+      rgba[i] = (uint8_t)((x << 4) | x);
+    }
+  }
+  else if (count == 6 || count == 8)
+  {
+    // #001122 or #00112233
+    int n = count / 2;
+    for (int i = 0; i < n; i++)
+    {
+      int x = convertHexDigit(*(str + (i * 2)));
+      int y = convertHexDigit(*(str + (i * 2) + 1));
+      rgba[i] = (uint8_t)((x << 4) | y);
+    }
+  }
+  else
+  {
+    lexError(parser, "Invalid number of color literal digits");
+    return;
+  }
+
+  parser->next.value = NUM_VAL(((uint32_t)rgba[0]) | ((uint32_t)rgba[1] << 8) | ((uint32_t)rgba[2] << 16) | ((uint32_t)rgba[3] << 24));
+  makeToken(parser, TOKEN_NUMBER);
 }
 
 // Finishes lexing a number literal.
@@ -1102,6 +1150,14 @@ static void nextToken(Parser* parser)
           skipLineComment(parser);
           break;
         }
+        
+        // If followed by hexadecimal character then parse as color literal.
+        if (convertHexDigit(peekChar(parser)) != -1)
+        {
+          readHexColor(parser);
+          return;
+        }
+
         // Otherwise we treat it as a token
         makeToken(parser, TOKEN_HASH); 
         return;
@@ -3359,7 +3415,7 @@ static bool matchAttribute(Compiler* compiler) {
   if(match(compiler, TOKEN_HASH)) 
   {
     compiler->numAttributes++;
-    bool runtimeAccess = match(compiler, TOKEN_BANG);
+    bool runtimeAccess = !match(compiler, TOKEN_QUESTION) && match(compiler, TOKEN_BANG);
     if(match(compiler, TOKEN_NAME)) 
     {
       Value group = compiler->parser->previous.value;

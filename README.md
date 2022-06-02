@@ -6,6 +6,8 @@ This is a fork of [Wren](https://github.com/wren-lang/wren) used for the Sock ga
 
 * `Num` trig methods now use turns (0..1) instead of radians (0..2π).
 
+* Removed bare `#name` attributes in favor of `#?name`.
+
 
 ## Additions
 
@@ -44,6 +46,10 @@ This is a fork of [Wren](https://github.com/wren-lang/wren) used for the Sock ga
   | `num.lerp(to, t)` | Linear interporlate between `num` and `to` using `t` |
   | `num.inverseLerp(to, target)` | Get `t` value such that `num.lerp(to, t) == target` |
   | `num.map(a1, b1, a2, b2)` | Linear remap `num` from range `a1`..`b1` to `a2`..`b2`. |
+  | `num.red` | Get byte at 0xff |
+  | `num.green` | Get byte at 0x00ff |
+  | `num.blue` | Get byte at 0x0000ff |
+  | `num.alpha` | Get byte at 0x000000ff |
 
 * Added `String` methods:
   | Method | Description |
@@ -60,6 +66,8 @@ This is a fork of [Wren](https://github.com/wren-lang/wren) used for the Sock ga
 * For the `Random` class:
   * Added a static singleton `Random.default`.
   * Added equivalent static method for each instance method, which use the `Random.default` singleton.
+
+* Added hexadecimal color literal (results in a 32 bit number): `#rgb` `#rgba` `#rrggbb` `#rrggbbaa`.
 
 * Added a C function for implictly importing modules (based on [avivbeeri's implementation](https://github.com/avivbeeri/wren/commit/522a20a77138330a17df060afa29f9f44f614f97)).
   

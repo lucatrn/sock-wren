@@ -926,6 +926,26 @@ DEF_PRIMITIVE(num_fraction)
   RETURN_NUM(modf(AS_NUM(args[0]) , &unused));
 }
 
+DEF_PRIMITIVE(num_red)
+{
+  RETURN_NUM((uint32_t)AS_NUM(args[0]) & 0xff);
+}
+
+DEF_PRIMITIVE(num_green)
+{
+  RETURN_NUM(((uint32_t)AS_NUM(args[0]) >> 8) & 0xff);
+}
+
+DEF_PRIMITIVE(num_blue)
+{
+  RETURN_NUM(((uint32_t)AS_NUM(args[0]) >> 16) & 0xff);
+}
+
+DEF_PRIMITIVE(num_alpha)
+{
+  RETURN_NUM(((uint32_t)AS_NUM(args[0]) >> 24) & 0xff);
+}
+
 DEF_PRIMITIVE(num_isInfinity)
 {
   RETURN_BOOL(isinf(AS_NUM(args[0])));
@@ -1559,6 +1579,10 @@ void wrenInitializeCore(WrenVM* vm)
   PRIMITIVE(vm->numClass, "atan(_)", num_atan2);
   PRIMITIVE(vm->numClass, "pow(_)", num_pow);
   PRIMITIVE(vm->numClass, "fraction", num_fraction);
+  PRIMITIVE(vm->numClass, "red", num_red);
+  PRIMITIVE(vm->numClass, "green", num_green);
+  PRIMITIVE(vm->numClass, "blue", num_blue);
+  PRIMITIVE(vm->numClass, "alpha", num_alpha);
   PRIMITIVE(vm->numClass, "isInfinity", num_isInfinity);
   PRIMITIVE(vm->numClass, "isInteger", num_isInteger);
   PRIMITIVE(vm->numClass, "isNan", num_isNan);
