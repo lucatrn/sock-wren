@@ -1794,6 +1794,12 @@ void wrenSetSlotDouble(WrenVM* vm, int slot, double value)
   setSlot(vm, slot, NUM_VAL(value));
 }
 
+void wrenSetSlotRange(WrenVM* vm, int slot, double from, double to, double step, bool isInclusive)
+{
+  ASSERT(step > 0.0 && !isnan(step), "Range step must be positive.");
+  setSlot(vm, slot, wrenNewRange(vm, from, to, step, isInclusive));
+}
+
 void* wrenSetSlotNewForeign(WrenVM* vm, int slot, int classSlot, size_t size)
 {
   validateApiSlot(vm, slot);

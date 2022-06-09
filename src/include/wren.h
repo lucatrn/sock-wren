@@ -462,6 +462,12 @@ WREN_API void wrenSetSlotBytes(WrenVM* vm, int slot, const char* bytes, size_t l
 // Stores the numeric [value] in [slot].
 WREN_API void wrenSetSlotDouble(WrenVM* vm, int slot, double value);
 
+// Stores the numeric range [from]..[to]..[step] in [slot].
+// [isInclusive] indicates if [to] is included in the range.
+//
+// [step] must be positive and not NaN.
+WREN_API void wrenSetSlotRange(WrenVM* vm, int slot, double from, double to, double step, bool isInclusive);
+
 // Creates a new instance of the foreign class stored in [classSlot] with [size]
 // bytes of raw storage and places the resulting object in [slot].
 //
