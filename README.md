@@ -34,6 +34,14 @@ This is a fork of [Wren](https://github.com/wren-lang/wren) used for the Sock ga
 
   > These use two new undocumented classes `EmptySequence` and `SingleSequence`.
 
+* Added `Sequence` methods:
+  | Method | Description |
+  | -- | -- |
+  | `sequence.find(predicate)` | Returns the first item in the sequence that matches the given predicate. |
+
+* Added `List` methods:
+  | `list.removeWhere(predicate)` | Returns all items that match the given predicate. |
+
 * Added `Num` methods:
   | Method | Description |
   | -- | -- |

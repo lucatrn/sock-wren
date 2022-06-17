@@ -72,6 +72,12 @@ class Sequence {
     return TakeSequence.new(this, count)
   }
 
+  find(f) {
+    for (element in this) {
+      if (f.call(element)) return element
+    }
+  }
+
   where(predicate) { WhereSequence.new(this, predicate) }
 
   reduce(acc, f) {
@@ -352,6 +358,17 @@ class List is Sequence {
       add(element)
     }
     return other
+  }
+
+  removeWhere(f) {
+    var i = 0
+    while (i < count) {
+      if (f.call(this[i])) {
+        removeAt(i)
+      } else {
+        i = i + 1
+      }
+    }
   }
 
   sort() { sort {|low, high| low < high } }
