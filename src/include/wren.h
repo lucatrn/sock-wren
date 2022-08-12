@@ -435,6 +435,12 @@ WREN_API void* wrenGetSlotForeign(WrenVM* vm, int slot);
 // It is in error [classSlot] is not a class object.
 WREN_API bool wrenGetSlotIsInstanceOf(WrenVM* vm, int slot, int classSlot);
 
+// Get the value of the field in the nth [field] for the instance in [slot].
+// The result is put in [resultSlot].
+//
+// It is in error [slot] is not an object instance.
+WREN_API void wrenGetSlotInstanceField(WrenVM* vm, int slot, int field, int resultSlot);
+
 // Reads a string from [slot].
 //
 // The memory for the returned string is owned by Wren. You can inspect it

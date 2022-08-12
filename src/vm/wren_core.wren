@@ -219,7 +219,7 @@ class WhereSequence is Sequence {
 }
 
 class String is Sequence {
-  bytes { StringByteSequence.new(this) }
+  bytes { ByteSequence.new(this) }
   codePoints { StringCodePointSequence.new(this) }
 
   split(delimiter) {
@@ -328,16 +328,16 @@ class String is Sequence {
   }
 }
 
-class StringByteSequence is Sequence {
-  construct new(string) {
-    _string = string
+class ByteSequence is Sequence {
+  construct new(seq) {
+    _seq = seq
   }
 
-  [index] { _string.byteAt(index) }
-  iterate(iterator) { _string.iterateByte_(iterator) }
-  iteratorValue(iterator) { _string.byteAt(iterator) }
+  [index] { _seq.byteAt(index) }
+  iterate(iterator) { _seq.iterateByte_(iterator) }
+  iteratorValue(iterator) { _seq.byteAt(iterator) }
 
-  count { _string.byteCount }
+  count { _seq.byteCount }
 }
 
 class StringCodePointSequence is Sequence {
@@ -486,37 +486,8 @@ class MapValueSequence is Sequence {
 class Range is Sequence {}
 
 class System {
-  static print() {
-    writeString_("\n")
-  }
-
   static print(obj) {
-    writeObject_(obj)
-    writeString_("\n")
-    return obj
-  }
-
-  static printAll(sequence) {
-    for (object in sequence) writeObject_(object)
-    writeString_("\n")
-  }
-
-  static write(obj) {
-    writeObject_(obj)
-    return obj
-  }
-
-  static writeAll(sequence) {
-    for (object in sequence) writeObject_(object)
-  }
-
-  static writeObject_(obj) {
-    var string = obj.toString
-    if (string is String) {
-      writeString_(string)
-    } else {
-      writeString_("[invalid toString]")
-    }
+    print_(obj.toString)
   }
 }
 

@@ -8,6 +8,10 @@ This is a fork of [Wren](https://github.com/wren-lang/wren) used for the Sock ga
 
 * Removed bare `#name` attributes in favor of `#?name`.
 
+* Removed all `System` printing/writing methods, except for `System.print(_)`.
+
+* Renamed `StringByteSequence` to `ByteSequence`.
+
 
 ## Additions
 
@@ -24,6 +28,8 @@ This is a fork of [Wren](https://github.com/wren-lang/wren) used for the Sock ga
   3..9..-1           // error, step must be positive
   "fling"[0..-1..2]  // "fig"
   ```
+
+* Added `Range` constructor `Range.new(from, to, step, isInclusive)`
 
 * Added `Sequence` static methods:
   | Method | Description |
@@ -48,7 +54,7 @@ This is a fork of [Wren](https://github.com/wren-lang/wren) used for the Sock ga
   | `num.tri` | Triangle wave function, repeats 0..1. |
   | `num.pulse` | Pulse wave function, repeats 0..1. |
   | `num.smoothstep` | Smoothstep function 0..1 |
-  | `num.repeat` | Wrap `num` on the range 0..1 |
+  | `num.repeatFreaction` | Wrap `num` on the range 0..1 |
   | `num.repeat(to)` | Wrap `num` on the range 0..`to` |
   | `num.repeat(from, to)` | Wrap `num` on the range `from`..`to` |
   | `num.lerp(to, t)` | Linear interporlate between `num` and `to` using `t` |

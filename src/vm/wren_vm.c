@@ -1757,6 +1757,18 @@ bool wrenGetSlotIsInstanceOf(WrenVM* vm, int slot, int classSlot) {
   return false;
 }
 
+void wrenGetSlotInstanceField(WrenVM* vm, int slot, int field, int resultSlot) {
+  validateApiSlot(vm, slot);
+  validateApiSlot(vm, resultSlot);
+  ASSERT(IS_INSTANCE(vm->apiStack[slot]), "slot must hold an instance.");
+  ASSERT(field >= 0, "field must not be negative");
+
+  ObjInstance* instance = AS_INSTANCE(vm->apiStack[slot]);
+  ASSERT(field < instance->obj.classObj->numFields, "field must be less than number of class fields");
+
+  vm->apiStack[resultSlot] = instance->fields[field];
+}
+
 const char* wrenGetSlotString(WrenVM* vm, int slot)
 {
   validateApiSlot(vm, slot);

@@ -783,6 +783,21 @@ DEF_PRIMITIVE(num_repeat2)
   RETURN_NUM(from + value - floor(value / len) * len);
 }
 
+DEF_PRIMITIVE(num_pingPong1)
+{
+  if (!validateNum(vm, args[1], "len value")) return false;
+
+  double value = AS_NUM(args[0]);
+  double len = AS_NUM(args[1]);
+  double len2 = len * 2.0;
+
+  // Repeat value between 0 and [len] * 2.
+  value = value - floor(value / len2) * len2;
+
+  // Invert past [len].
+  RETURN_NUM(len - fabs(value - len));
+}
+
 DEF_PRIMITIVE(num_mod)
 {
   if (!validateNum(vm, args[1], "Right operand")) return false;
@@ -829,7 +844,7 @@ DEF_PRIMITIVE(num_atan2)
 {
   if (!validateNum(vm, args[1], "x value")) return false;
 
-  RETURN_NUM(atan2(AS_NUM(args[0]), AS_NUM(args[1])) / TAU);
+  RETURN_NUM(atan2(AS_NUM(args[1]), AS_NUM(args[0])) / TAU);
 }
 
 DEF_PRIMITIVE(num_min)
@@ -884,7 +899,7 @@ DEF_PRIMITIVE(num_inverseLerp)
   double target = AS_NUM(args[2]);
   double result;
   if (from == to) {
-    result = target < from ? 0.0 : 1.0;
+    result = WREN_DOUBLE_NAN;
   } else {
     result = (target - from) / (to - from);
   }
@@ -1044,6 +1059,21 @@ DEF_PRIMITIVE(object_toString)
 DEF_PRIMITIVE(object_type)
 {
   RETURN_OBJ(wrenGetClass(vm, args[0]));
+}
+
+DEF_PRIMITIVE(range_new)
+{
+  if (!validateNum(vm, args[1], "From value")) return false;
+  if (!validateNum(vm, args[2], "To value")) return false;
+  if (!validateNum(vm, args[3], "Step value")) return false;
+  if (!IS_BOOL(args[4])) RETURN_ERROR("IsInclusive value must be a Bool");;
+
+  double from = AS_NUM(args[1]);
+  double to = AS_NUM(args[2]);
+  double step = AS_NUM(args[3]);
+  bool isInclusive = AS_BOOL(args[4]);
+
+  RETURN_OBJ(wrenNewRange(vm, from, to, step, isInclusive));
 }
 
 DEF_PRIMITIVE(range_dotDot)
@@ -1390,8 +1420,10 @@ DEF_PRIMITIVE(system_gc)
   RETURN_NULL;
 }
 
-DEF_PRIMITIVE(system_writeString)
+DEF_PRIMITIVE(system_print_)
 {
+  if (!validateString(vm, args[1], "Argument")) return false;
+
   if (vm->config.writeFn != NULL)
   {
     vm->config.writeFn(vm, AS_CSTRING(args[1]));
@@ -1592,9 +1624,10 @@ void wrenInitializeCore(WrenVM* vm)
   PRIMITIVE(vm->numClass, "tri", num_tri);
   PRIMITIVE(vm->numClass, "pulse", num_pulse);
   PRIMITIVE(vm->numClass, "smoothstep", num_smoothstep);
-  PRIMITIVE(vm->numClass, "repeat", num_repeat);
+  PRIMITIVE(vm->numClass, "repeatFraction", num_repeat);
   PRIMITIVE(vm->numClass, "repeat(_)", num_repeat1);
   PRIMITIVE(vm->numClass, "repeat(_,_)", num_repeat2);
+  PRIMITIVE(vm->numClass, "pingpong(_)", num_pingPong1);
   PRIMITIVE(vm->numClass, "lerp(_,_)", num_lerp);
   PRIMITIVE(vm->numClass, "inverseLerp(_,_)", num_inverseLerp);
   PRIMITIVE(vm->numClass, "map(_,_,_,_)", num_map);
@@ -1653,6 +1686,7 @@ void wrenInitializeCore(WrenVM* vm)
   PRIMITIVE(vm->mapClass, "valueIteratorValue_(_)", map_valueIteratorValue);
 
   vm->rangeClass = AS_CLASS(wrenFindVariable(vm, coreModule, "Range"));
+  PRIMITIVE(vm->rangeClass->obj.classObj, "new(_,_,_,_)", range_new);
   PRIMITIVE(vm->rangeClass, "..(_)", range_dotDot);
   PRIMITIVE(vm->rangeClass, "from", range_from);
   PRIMITIVE(vm->rangeClass, "to", range_to);
@@ -1667,7 +1701,7 @@ void wrenInitializeCore(WrenVM* vm)
   ObjClass* systemClass = AS_CLASS(wrenFindVariable(vm, coreModule, "System"));
   PRIMITIVE(systemClass->obj.classObj, "clock", system_clock);
   PRIMITIVE(systemClass->obj.classObj, "gc()", system_gc);
-  PRIMITIVE(systemClass->obj.classObj, "writeString_(_)", system_writeString);
+  PRIMITIVE(systemClass->obj.classObj, "print_(_)", system_print_);
 
   // While bootstrapping the core types and running the core module, a number
   // of string objects have been created, many of which were instantiated
