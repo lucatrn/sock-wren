@@ -12,6 +12,8 @@ This is a fork of [Wren](https://github.com/wren-lang/wren) used for the Sock ga
 
 * Renamed `StringByteSequence` to `ByteSequence`.
 
+* The `sequence.each(fn)` method now also passes each item's index, e.g. `"abc".each {|c, i| System.print("%(i): %(c)") }`.
+
 
 ## Additions
 

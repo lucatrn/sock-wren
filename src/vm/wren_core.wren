@@ -47,8 +47,16 @@ class Sequence {
   }
 
   each(f) {
-    for (element in this) {
-      f.call(element)
+    if (f is Fn && f.arity == 2) {
+      var i = 0
+      for (element in this) {
+        f.call(element, i)
+        i = i + 1
+      }
+    } else {
+      for (element in this) {
+        f.call(element)
+      }
     }
   }
 
